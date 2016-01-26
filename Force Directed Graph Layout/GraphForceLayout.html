@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-- //University of Illinois/NCSA Open Source License>
+Copyright (c) 2015 University of Illinois
+All rights reserved.
+Developed by: 		Eric Shaffer
+                  Department of Computer Science
+                  University of Illinois at Urbana Champaign
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+documentation files (the "Software"), to deal with the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and
+to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+Redistributions of source code must retain the above copyright notice, this list of conditions and the following
+disclaimers.Redistributions in binary form must reproduce the above copyright notice, this list
+of conditions and the following disclaimers in the documentation and/or other materials provided with the distribution.
+Neither the names of <Name of Development Group, Name of Institution>, nor the names of its contributors may be
+used to endorse or promote products derived from this Software without specific prior written permission.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS WITH THE SOFTWARE. -->
+
+
+
+<head>
+<meta charset="utf-8">
+    <title>CS 519: Scientific Visualization: Force-Directed Graph Layout</title>
+</head>
+	<body onload="main()">
+        <form id="input_form">
+        <fieldset>
+        <legend>Graph Layout Parameters</legend>
+         Maximum movement <input type="text" id="t" value="40.0"><br><br>
+         Damping value <input type="text" id="delta_t" value="0.98"><br><br>
+         Number of iterations <input type="text" id="num_iter" value="300"><br><br>
+         Use default k value <input type="checkbox" id="default_k"><br>
+         User-provided k value<input type="text" id="k" value="1"><br><br>
+         Vertex amount<input type="text" id="Num" value="30"><br><br>
+         Vertex diameter<input type="text" id="v_size" value="5"><br><br>
+         Edge thickness<input type="text" id="e_size" value="1"><br><br>
+        </fieldset>
+        </form>
+        <button onclick="render()">Render</button>
+		<canvas id ="example" width ="640" height ="480" style="border:5px solid #FFFFFF;">
+			Please use a browser that supports "canvas"
+		</canvas >
+
+<script>
+    
+var width = 640,
+    height = 480;
+/*var graph = {
+    "nodes": [  { "x": 208.992345, "y": 273.053211 },
+                { "x": 595.98896,  "y":  56.377057 },
+                { "x": 319.568434, "y": 278.523637 },
+                { "x": 214.494264, "y": 214.893585 },
+                { "x": 482.664139, "y": 340.386773 },
+                { "x":  84.078465, "y": 192.021902 },
+                { "x": 196.952261, "y": 370.798667 },
+                { "x": 107.358165, "y": 435.15643  },
+                { "x": 401.168523, "y": 443.407779 },
+                { "x": 508.368779, "y": 386.665811 },
+                { "x": 355.93773,  "y": 460.158711 },
+                { "x": 283.630624, "y":  87.898162 },
+                { "x": 194.771218, "y": 436.366028 },
+                { "x": 477.520013, "y": 337.547331 },
+                { "x": 572.98129,  "y": 453.668459 },
+                { "x": 106.717817, "y": 235.990363 },
+                { "x": 265.064649, "y": 396.904945 },
+                { "x": 452.719997, "y": 137.886092 }
+            ],
+    "edges": [  { "target": 11, "source":  0 },
+                { "target":  3, "source":  0 },
+                { "target": 10, "source":  0 },
+                { "target": 16, "source":  0 },
+                { "target":  1, "source":  0 },
+                { "target":  3, "source":  0 },
+                { "target":  9, "source":  0 },
+                { "target":  5, "source":  0 },
+                { "target": 11, "source":  0 },
+                { "target": 13, "source":  0 },
+                { "target": 16, "source":  0 },
+                { "target":  3, "source":  1 },
+                { "target":  9, "source":  1 },
+                { "target": 12, "source":  1 },
+                { "target":  4, "source":  2 },
+                { "target":  6, "source":  2 },
+                { "target":  8, "source":  2 },
+                { "target": 13, "source":  2 },
+                { "target": 10, "source":  3 },
+                { "target": 16, "source":  3 },
+                { "target":  9, "source":  3 },
+                { "target":  7, "source":  3 },
+                { "target": 11, "source":  5 },
+                { "target": 13, "source":  5 },
+                { "target": 12, "source":  5 },
+                { "target":  8, "source":  6 },
+                { "target": 13, "source":  6 },
+                { "target": 10, "source":  7 },
+                { "target": 11, "source":  7 },
+                { "target": 17, "source":  8 },
+                { "target": 13, "source":  8 },
+                { "target": 11, "source": 10 },
+                { "target": 16, "source": 10 },
+                { "target": 13, "source": 11 },
+                { "target": 14, "source": 12 },
+                { "target": 14, "source": 12 },
+                { "target": 14, "source": 12 },
+                { "target": 15, "source": 12 },
+                { "target": 16, "source": 12 },
+                { "target": 15, "source": 14 },
+                { "target": 16, "source": 14 },
+                { "target": 15, "source": 14 },
+                { "target": 16, "source": 15 },
+                { "target": 16, "source": 15 },
+                { "target": 17, "source": 16 }
+            ]
+    }; */
+
+    
+
+function main() {
+    render();
+}
+function render(){
+    var canvas = document.getElementById('example');
+    if (! canvas) {
+        console.log(' Failed to retrieve the < canvas > element');
+        return false;
+    }
+    else {
+	    console.log(' Got < canvas > element ');
+    }
+    // Get the rendering context for 2DCG <- (2)
+
+    var n= parseFloat(document.getElementById("Num").value);;
+    var t= parseFloat(document.getElementById("t").value);
+    var num_iter = parseInt(document.getElementById("num_iter").value);
+    var delta_t = parseFloat(document.getElementById("delta_t").value);
+    var radius = parseFloat(document.getElementById("v_size").value);
+    var e_size = parseFloat(document.getElementById("e_size").value);
+    var k = parseFloat(document.getElementById("k").value);
+   
+    var ctx = canvas.getContext('2d');   
+    var graph=random_cycle(n,width,height);
+    
+    if (document.getElementById("default_k").checked) k= Math.sqrt(width*height)/n; 
+    
+    update_positions(graph,num_iter,t, delta_t, k); 
+    draw_graph(ctx,graph,radius, e_size); 
+         
+}
+    
+    
+    
+    //------------------------------------------------------
+    
+function random_cycle(n,lim_x,lim_y) {
+    var edges=[]; 
+    for(var i=0;i<n;i++) {
+       edge = {"target":(i+1) % n, "source":i}
+       edges.push(edge)
+          }
+    var nodes=[];
+    for(var i=0;i<n;i++) {
+       var rand_x = Math.random()*lim_x; 
+       var rand_y = Math.random()*lim_y; 
+       node = {"x": rand_x, "y": rand_y} 
+       nodes.push(node)
+          }
+    var g = {"nodes":nodes,"edges":edges}; 
+    return g;
+    }    
+    
+    // Change these functions
+  function draw_graph(ctx,graph,radius, e_size)
+        {   
+            ctx.clearRect(0, 0, width,height);
+            var nodes = graph["nodes"]
+            var edges = graph["edges"]
+            // Draw the edges
+            for (var i=0;i<edges.length;i++)
+            {
+                var e = edges[i];
+                var vidx=e["source"]
+                x1 = nodes[vidx]["x"];
+                y1 = nodes[vidx]["y"];
+                vidx=e["target"]
+                x2 = nodes[vidx]["x"];
+                y2 = nodes[vidx]["y"];
+                ctx.beginPath();
+                ctx.moveTo(x1,y1);
+	            ctx.lineTo(x2,y2);
+                ctx.lineWidth = e_size;
+                ctx.strokeStyle = '#000000';
+                ctx.stroke();
+            }
+             // Draw the vertices
+            for (var i=0;i<nodes.length;i++)
+            {
+                var node = nodes[i]
+               // var radius = 5;
+                x = node["x"];
+                y = node["y"];
+                ctx.beginPath();
+                ctx.arc(x,y,radius,0,2*Math.PI);
+                ctx.fillStyle = '#FF0000';
+                ctx.fill();
+            }
+        }
+    
+    
+    /*  function animate(lastTime, graph, runAnimation, canvas, context) {
+        if(runAnimation.value) {
+          // update
+          var time = (new Date()).getTime();
+          var timeDiff = time - lastTime;
+
+          // pixels / second
+          var linearSpeed = 100;
+          var linearDistEachFrame = linearSpeed * timeDiff / 1000;
+          var currentX = myRectangle.x;
+
+          if(currentX < canvas.width - myRectangle.width - myRectangle.borderWidth / 2) {
+            var newX = currentX + linearDistEachFrame;
+            myRectangle.x = newX;
+          }
+
+          // clear
+          context.clearRect(0, 0, canvas.width, canvas.height);
+
+          // draw
+          drawRect(myRectangle, context);
+
+          // request new frame
+          requestAnimFrame(function() {
+            animate(time, myRectangle, runAnimation, canvas, context);
+          });
+        }
+      }
+ */   
+    
+ function update_positions(graph,num_iter,t, delta_t, k){
+       // var graph_new=graph
+        var nodes=graph["nodes"]
+        var edges=graph["edges"]
+        
+        var k= Math.sqrt(width*height)/nodes.length; 
+        for (var iter=0; iter<num_iter; iter++) {
+            var dispx=Array.apply(null, Array(nodes.length)).map(Number.prototype.valueOf,0);
+            var dispy=Array.apply(null, Array(nodes.length)).map(Number.prototype.valueOf,0);    
+            
+           //calculate replusive force
+            for (var i=0; i<nodes.length; i++) {  
+                for(var j=0; j<nodes.length; j++) { 
+                   if(i!=j)  {
+                       var d=[nodes[i]["x"]-nodes[j]["x"], nodes[i]["y"]-nodes[j]["y"]];  
+                       var d_norm= Math.sqrt(d[0]*d[0] + d[1]*d[1]); 
+                       var fr=frep(d_norm, k); 
+                       dispx[i]=dispx[i] + d[0]*fr/d_norm;
+                       dispy[i]=dispy[i] + d[1]*fr/d_norm; 
+                     }
+                }
+            }
+            
+            //calculate attractive force 
+            
+            for(var e=0; e<edges.length; e++) { 
+                
+            //get the nodes number of  target and source    
+                var tg=edges[e]["target"]; 
+                var sc=edges[e]["source"]; 
+                var d=[nodes[tg]["x"]-nodes[sc]["x"],nodes[tg]["y"]-nodes[sc]["y"]];
+                var d_norm= Math.sqrt(d[0]*d[0] + d[1]*d[1]); 
+                var fa=fatt(d_norm, k);
+                dispx[tg]=dispx[tg] - d[0]*fa/d_norm;
+                dispy[tg]=dispy[tg] - d[1]*fa/d_norm; 
+                
+                dispx[sc]=dispx[sc] + d[0]*fa/d_norm;
+                dispy[sc]=dispy[sc] + d[1]*fa/d_norm;   
+            } 
+            
+            //limit the maximum displacement to the temperature t  and then prevent from being displaced outside frame}
+            for(var i=0; i<nodes.length; i++) { 
+                var disp_norm=Math.sqrt(dispx[i]* dispx[i] + dispy[i]*dispy[i]); 
+                nodes[i]["x"]= nodes[i]["x"] +(dispx[i]/disp_norm)*Math.min(disp_norm, t); 
+                nodes[i]["y"]= nodes[i]["y"] +(dispy[i]/disp_norm)*Math.min(disp_norm, t); 
+            
+                nodes[i]["x"]= Math.min(width, Math.max(0, nodes[i]["x"])); 
+                nodes[i]["y"]= Math.min(height, Math.max(0, nodes[i]["y"]));
+            }  
+          t=t*delta_t; 
+          
+        } 
+        } 
+    
+ function fatt(d, k){ 
+         var fatt = d*d/k; 
+         return fatt; 
+        }
+ function frep(d, k){
+         var frep=k*k/d; 
+         return frep; 
+        }
+    
+    
+
+    </script>
+	</body>
+</html>
